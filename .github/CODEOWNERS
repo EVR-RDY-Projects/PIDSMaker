@@ -1,18 +1,1 @@
-# Default ownership.
-* @nybblez0x42697A @EVR-RDY
-
-# Governance and automation.
-/.github/ @nybblez0x42697A @EVR-RDY
-/AGENTS.md @nybblez0x42697A @EVR-RDY
-/CLAUDE.md @nybblez0x42697A @EVR-RDY
-/package.json @nybblez0x42697A @EVR-RDY
-/package-lock.json @nybblez0x42697A @EVR-RDY
-
-# Runtime/source.
-/src/ @nybblez0x42697A @EVR-RDY
-/extensions/ @nybblez0x42697A @EVR-RDY
-/plugins/ @nybblez0x42697A @EVR-RDY
-
-# Tests and validation.
-/tests/ @nybblez0x42697A @EVR-RDY
-/e2e/ @nybblez0x42697A @EVR-RDY
+* @nybblez0x42697A
