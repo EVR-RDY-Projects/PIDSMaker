@@ -1,0 +1,54 @@
+name: branch-flow
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  branch-flow:
+    name: branch-flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enforce branch flow
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base="${{ github.base_ref }}"
+          head="${{ github.head_ref }}"
+
+          echo "base=$base"
+          echo "head=$head"
+
+          if [ "$base" = "main" ]; then
+            case "$head" in
+              develop|release/*)
+                exit 0
+                ;;
+              *)
+                echo "PRs to main must come from develop or release/*."
+                exit 1
+                ;;
+            esac
+          fi
+
+          if [ "$base" = "develop" ]; then
+            case "$head" in
+              feature/*|fix/*|docs/*|chore/*|test/*|refactor/*)
+                exit 0
+                ;;
+              *)
+                echo "PRs to develop must come from feature/*, fix/*, docs/*, chore/*, test/*, or refactor/*."
+                exit 1
+                ;;
+            esac
+          fi
+
+          echo "No branch-flow rule matched; allowing."
