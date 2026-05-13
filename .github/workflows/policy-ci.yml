@@ -1,0 +1,139 @@
+name: policy-ci
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - feature/**
+      - fix/**
+      - docs/**
+      - chore/**
+      - test/**
+      - refactor/**
+      - wip/**
+      - private/**
+      - scratch/**
+      - spike/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-ci:
+    name: policy-ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect repository shape
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            [ -f package.json ] && echo "node=true" || echo "node=false"
+            [ -f pyproject.toml ] || [ -f requirements.txt ] && echo "python=true" || echo "python=false"
+            [ -f Cargo.toml ] && echo "rust=true" || echo "rust=false"
+            [ -f go.mod ] && echo "go=true" || echo "go=false"
+            [ -f Dockerfile ] && echo "docker=true" || echo "docker=false"
+            [ -d .specweave ] && echo "specweave=true" || echo "specweave=false"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad="$(git ls-files | grep -E '(^|/)(node_modules|dist|build|\.next|\.turbo|coverage|\.venv|venv)(/|$)|(^|/).+ 2\.[^/]+$|(^|/).+ copy\.[^/]+$|(^|/).+ conflicted copy[^/]*$' || true)"
+          if [ -n "$bad" ]; then
+            echo "Tracked generated/cloud-conflict paths are not allowed:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Setup Node
+        if: steps.detect.outputs.node == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Node install
+        if: steps.detect.outputs.node == 'true'
+        run: npm ci
+
+      - name: Node build
+        if: steps.detect.outputs.node == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if npm run | grep -q '^  build'; then
+            npm run build
+          else
+            echo "No npm build script."
+          fi
+
+      - name: Node test
+        if: steps.detect.outputs.node == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if npm run | grep -q '^  test'; then
+            npm test
+          elif [ -f vitest.config.ts ] || [ -f vitest.config.js ]; then
+            npx vitest run
+          else
+            echo "No npm test/vitest entrypoint."
+          fi
+
+      - name: Setup Python
+        if: steps.detect.outputs.python == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Python checks
+        if: steps.detect.outputs.python == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          if [ -f pyproject.toml ]; then
+            pip install .
+          fi
+          if [ -d tests ]; then
+            python -m pytest
+          else
+            echo "No Python tests directory."
+          fi
+
+      - name: Rust checks
+        if: steps.detect.outputs.rust == 'true'
+        run: cargo test --locked
+
+      - name: Go checks
+        if: steps.detect.outputs.go == 'true'
+        run: go test ./...
+
+      - name: Docker build smoke
+        if: steps.detect.outputs.docker == 'true'
+        run: docker build -t local/policy-ci:${{ github.sha }} .
+
+      - name: SpecWeave quick status
+        if: steps.detect.outputs.specweave == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v specweave >/dev/null 2>&1; then
+            specweave progress || true
+          else
+            echo "SpecWeave directory present, CLI unavailable in CI image."
+          fi
