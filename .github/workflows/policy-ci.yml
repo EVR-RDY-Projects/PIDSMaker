@@ -1,3 +1,4 @@
+---
 name: policy-ci
 
 on:
@@ -49,7 +50,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bad="$(git ls-files | grep -E '(^|/)(node_modules|dist|build|\.next|\.turbo|coverage|\.venv|venv)(/|$)|(^|/).+ 2\.[^/]+$|(^|/).+ copy\.[^/]+$|(^|/).+ conflicted copy[^/]*$' || true)"
+          bad_pattern='(^|/)(node_modules|dist|build|\.next|\.turbo|coverage|\.venv|venv)(/|$)'
+          bad_pattern="${bad_pattern}|(^|/).+ 2\.[^/]+$"
+          bad_pattern="${bad_pattern}|(^|/).+ copy\.[^/]+$"
+          bad_pattern="${bad_pattern}|(^|/).+ conflicted copy[^/]*$"
+          bad="$(git ls-files | grep -E "$bad_pattern" || true)"
           if [ -n "$bad" ]; then
             echo "Tracked generated/cloud-conflict paths are not allowed:"
             echo "$bad"
@@ -103,13 +108,19 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
+          if find . -path ./.git -prune -o -name requirements.txt -print -quit | grep -q .; then
+            while IFS= read -r req; do
+              echo "Installing dependencies from $req"
+              pip install -r "$req"
+            done < <(find . -path ./.git -prune -o -name requirements.txt -print | sort)
           fi
-          if [ -f pyproject.toml ]; then
+          if [ -f pyproject.toml ] && grep -qE "^\[project\]|^\[build-system\]" pyproject.toml; then
             pip install .
+          elif [ -f pyproject.toml ]; then
+            echo "pyproject.toml contains tool configuration only; skipping pip install ."
           fi
           if [ -d tests ]; then
+            pip install pytest
             python -m pytest
           else
             echo "No Python tests directory."
