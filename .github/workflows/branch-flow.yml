@@ -42,11 +42,11 @@ jobs:
 
           if [ "$base" = "develop" ]; then
             case "$head" in
-              feature/*|fix/*|docs/*|chore/*|test/*|refactor/*)
+              feature/*|fix/*|docs/*|chore/*|test/*|refactor/*|dependabot/*)
                 exit 0
                 ;;
               *)
-                echo "PRs to develop must come from feature/*, fix/*, docs/*, chore/*, test/*, or refactor/*."
+                echo "PRs to develop must come from feature/*, fix/*, docs/*, chore/*, test/*, refactor/*, or dependabot/*. "
                 exit 1
                 ;;
             esac
