@@ -1,1 +1,9 @@
-* @nybblez0x42697A
+# CODEOWNERS - ownership is by TEAM, never by individual.
+#
+# A team listed here MUST have write access to this repository or GitHub
+# silently ignores the entry, making the review requirement unsatisfiable.
+
+*                        @EVR-RDY-Projects/taps-owners
+
+# Control plane - always governance
+/.github/                @EVR-RDY-Projects/governance-owners
