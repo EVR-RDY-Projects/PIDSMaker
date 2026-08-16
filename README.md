@@ -5,7 +5,7 @@
 <div align="center">
 
 [![Docs](https://img.shields.io/badge/Docs-Online-ed6a2f?style=flat&labelColor=gray)](https://ubc-provenance.github.io/PIDSMaker/)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19813647.svg)](https://doi.org/10.5281/zenodo.19813646)
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.19813646-ed6a2f?style=flat&labelColor=gray)](https://doi.org/10.5281/zenodo.19813646)
 [![License](https://img.shields.io/github/license/ubc-provenance/PIDSMaker?style=flat&color=ed6a2f&labelColor=gray)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/ubc-provenance/PIDSMaker?style=flat&color=ed6a2f&labelColor=gray)](https://github.com/ubc-provenance/PIDSMaker/releases)
 [![Stars](https://img.shields.io/github/stars/ubc-provenance/PIDSMaker?style=flat&color=ed6a2f&labelColor=white&logo=github&logoColor=black)](https://github.com/ubc-provenance/PIDSMaker/stargazers)
@@ -175,11 +175,19 @@ evaluation:
     threshold_method: nodlink
 ```
 
-### Visualization
+### Interactive embedding viewer
 
-You can then visualize the results using the many generated figures, locally or on Weights and Biases.
+PIDSMaker also ships an interactive 3D web viewer for exploring a run's node
+embeddings — temporal playback, per-node inspection, attack-graph overlays, and
+switching between the featurization and GNN-encoder spaces. Train a run with
+`--save_for_viz` to persist the artifacts it needs, then launch it (see the
+[web viewer README](pidsmaker/vizgen/web/README.md)):
 
-![alt text](.github/img/scores.png)
+```bash
+python -m pidsmaker.vizgen.web.viz_server
+```
+
+![PIDSMaker web embedding viewer](.github/img/web_ui.png)
 
 ## Hyperparameter tuning
 
